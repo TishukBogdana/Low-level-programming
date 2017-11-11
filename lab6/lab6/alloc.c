@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include "structs.h"
 
@@ -40,12 +37,12 @@ iter = iter->next;
 if((iter->next==NULL)&&((!iter->is_free)||(iter->capacity<qu+sizeof(mem_t)+BLOCK_MIN_SIZE))){
 i=(size_t) iter+sizeof(mem_t)+iter->capacity;
 ptr =(void*)i;
-map =(mem_t*)map_after(ptr,128);
+map =(mem_t*)map_after(ptr,qu+2*sizeof(mem_t)+BLOCK_MIN_SIZE);
 
  if(map!=NULL){
  iter->next = map;
  return map;
- }else{map = (mem_t*) map_evr(256);}
+ }else{map = (mem_t*) map_evr(qu);}
 if(map!=NULL){
 iter->next=map;
 return map;
@@ -62,7 +59,7 @@ map = (mem_t*) mmap( (void*) (x+mem-x%mem), size, PROT_READ|PROT_WRITE, MAP_FIXE
 if((size_t)map ==-1){return NULL;}
 map->next=NULL;
 map->is_free=1;
-map->capacity=size - sizeof(mem_t);
+map->capacity=cast(size) - sizeof(mem_t);
 return map;
 }
 
@@ -71,7 +68,7 @@ map = (mem_t*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 
 if((size_t)map ==-1){return NULL;}
 map->next=NULL;
 map->is_free=1;
-map->capacity=size - sizeof(mem_t);
+map->capacity=cast(size)- sizeof(mem_t);
 return map;
 }
 
@@ -80,10 +77,14 @@ map =(mem_t*) mmap(HEAP_START, init_size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_A
 if((size_t)map ==-1){return NULL;}
 map->next=NULL;
 map->is_free=1;
-map->capacity = init_size-sizeof(mem_t);
+map->capacity = cast(init_size)-sizeof(mem_t);
 return map;
 }
 
+size_t cast(size_t qu){
+if(qu%4096==0){return qu;}
+return (qu/4096+1)*4096;
+}
 
 void m_free(void* ptrd){
 int i;
@@ -114,5 +115,4 @@ for(i=0; i<cap;i++){
 }
 m_free(ptr);
 return (void*) ptr_new;
-
 }
